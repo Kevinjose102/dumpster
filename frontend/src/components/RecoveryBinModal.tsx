@@ -164,7 +164,7 @@ export const RecoveryBinModal: React.FC<RecoveryBinModalProps> = ({
               <button
                 onClick={handleRestore}
                 disabled={selectedIds.size === 0 || loading}
-                className="flex items-center gap-1.5 bg-accent-teal hover:bg-accent-teal-hover text-white text-[10px] font-semibold uppercase tracking-wider py-1.5 px-3 rounded transition-colors disabled:opacity-50"
+                className="flex items-center gap-1.5 bg-accent-green hover:bg-accent-green-hover text-white text-[10px] font-semibold uppercase tracking-wider py-1.5 px-3 rounded transition-colors disabled:opacity-50"
               >
                 <ArrowCounterClockwise size={12} weight="bold" />
                 Restore Selected

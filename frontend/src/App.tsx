@@ -576,7 +576,7 @@ export default function App() {
                     setLoading(false);
                   }
                 }}
-                className="flex items-center gap-2 bg-accent-teal hover:bg-accent-teal-hover text-white text-xs font-semibold py-2 px-6 rounded transition-colors uppercase tracking-wider"
+                className="flex items-center gap-2 bg-accent-green hover:bg-accent-green-hover text-white text-xs font-semibold py-2 px-6 rounded transition-colors uppercase tracking-wider"
               >
                 Archive to PC
               </button>

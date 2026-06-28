@@ -248,9 +248,14 @@ export const VirtualGrid: React.FC<VirtualGridProps> = ({
   const [containerWidth, setContainerWidth] = useState(800);
   const [containerHeight, setContainerHeight] = useState(600);
 
-  const itemWidth = 150;
-  const itemHeight = 170;
   const gap = 16;
+  const padding = 32;
+  const paddingOffset = 16;
+
+  const columns = Math.max(1, Math.floor((containerWidth - padding + gap) / (150 + gap)));
+  const totalGapsWidth = (columns - 1) * gap;
+  const itemWidth = Math.floor((containerWidth - padding - totalGapsWidth) / columns);
+  const itemHeight = itemWidth + 20;
 
   // Drag select states
   const [dragRect, setDragRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
@@ -277,15 +282,14 @@ export const VirtualGrid: React.FC<VirtualGridProps> = ({
 
     setDragRect({ x, y, w, h });
 
-    const columnsCount = Math.max(1, Math.floor((containerWidth + gap) / (itemWidth + gap)));
     const rowHeightVal = itemHeight + gap;
     const nextSelected = new Set(initialSelectedRef.current);
 
     files.forEach((file, index) => {
-      const row = Math.floor(index / columnsCount);
-      const col = index % columnsCount;
+      const row = Math.floor(index / columns);
+      const col = index % columns;
 
-      const itemLeft = col * (itemWidth + gap);
+      const itemLeft = paddingOffset + col * (itemWidth + gap);
       const itemTop = row * rowHeightVal;
       const itemRight = itemLeft + itemWidth;
       const itemBottom = itemTop + itemHeight;
@@ -419,7 +423,6 @@ export const VirtualGrid: React.FC<VirtualGridProps> = ({
     setScrollTop(e.currentTarget.scrollTop);
   };
 
-  const columns = Math.max(1, Math.floor((containerWidth + gap) / (itemWidth + gap)));
   const rows = Math.ceil(files.length / columns);
   const rowHeight = itemHeight + gap;
   const totalHeight = rows * rowHeight;
@@ -464,7 +467,7 @@ export const VirtualGrid: React.FC<VirtualGridProps> = ({
                 onDoubleClick={onDoubleClick}
                 width={itemWidth}
                 height={itemHeight}
-                left={col * (itemWidth + gap)}
+                left={paddingOffset + col * (itemWidth + gap)}
                 top={row * rowHeight}
               />
             );
@@ -473,7 +476,7 @@ export const VirtualGrid: React.FC<VirtualGridProps> = ({
           {/* Visual drag selection bounding box */}
           {dragRect && (
             <div
-              className="absolute border border-accent-teal bg-accent-teal/15 pointer-events-none rounded z-30 shadow-[0_0_8px_rgba(13,148,136,0.2)]"
+              className="absolute border border-accent-teal bg-accent-teal/15 pointer-events-none rounded z-30 shadow-[0_0_8px_rgba(235,94,40,0.2)]"
               style={{
                 left: `${dragRect.x}px`,
                 top: `${dragRect.y}px`,

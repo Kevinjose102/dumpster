@@ -153,7 +153,7 @@ export const ContextPanel: React.FC<ContextPanelProps> = ({
         <button
           onClick={onArchive}
           disabled={loading || selectedCount === 0}
-          className="w-full flex items-center justify-center gap-2.5 bg-accent-teal hover:bg-accent-teal-hover text-white text-xs font-semibold py-3 px-4 rounded transition-colors disabled:opacity-50 uppercase tracking-wider"
+          className="w-full flex items-center justify-center gap-2.5 bg-accent-green hover:bg-accent-green-hover text-white text-xs font-semibold py-3 px-4 rounded transition-colors disabled:opacity-50 uppercase tracking-wider"
         >
           <Archive size={16} weight="bold" />
           {loading ? "Processing..." : "Archive Selected"}

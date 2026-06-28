@@ -7,12 +7,12 @@
   --font-sans: 'Geist', 'SF Pro Display', -apple-system, sans-serif;
   --font-mono: 'Geist Mono', 'SF Mono', 'JetBrains Mono', monospace;
   
-  --color-panel-bg: #302E2B;
-  --color-grid-bg: #252422;
-  --color-card-bg: #403D39;
-  --color-card-hover: #4D4945;
+  --color-panel-bg: #0F1012;
+  --color-grid-bg: #060708;
+  --color-card-bg: #1B1C20;
+  --color-card-hover: #26272E;
   
-  --color-border-subtle: #403D39;
+  --color-border-subtle: #2A2C33;
   --color-text-primary: #FFFCF2;
   --color-text-secondary: #CCC5B9;
   --color-text-muted: #8C867E;
@@ -20,13 +20,15 @@
   --color-accent-teal: #EB5E28;
   --color-accent-teal-hover: #F07546;
   --color-accent-teal-deep: #D04815;
+  --color-accent-green: #10B981;
+  --color-accent-green-hover: #059669;
   --color-accent-red: #E53935;
   --color-accent-red-hover: #ff4d4d;
   --color-warning-ember: #FF7043;
 }
 
 body {
-  background-color: #252422;
+  background-color: #060708;
   color: #CCC5B9;
   font-family: var(--font-sans);
   margin: 0;
@@ -41,14 +43,14 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #252422;
+  background: #060708;
 }
 ::-webkit-scrollbar-thumb {
-  background: #403D39;
+  background: #1B1C20;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #4D4945;
+  background: #26272E;
 }
 
 /* Base resets */

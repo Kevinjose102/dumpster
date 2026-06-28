@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500;600;700&family=Geist:wght@300;400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+
+@theme {
+  --font-sans: 'Geist', 'SF Pro Display', -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', 'SF Mono', 'JetBrains Mono', monospace;
+  
+  --color-panel-bg: #302E2B;
+  --color-grid-bg: #252422;
+  --color-card-bg: #403D39;
+  --color-card-hover: #4D4945;
+  
+  --color-border-subtle: #403D39;
+  --color-text-primary: #FFFCF2;
+  --color-text-secondary: #CCC5B9;
+  --color-text-muted: #8C867E;
+  
+  --color-accent-teal: #EB5E28;
+  --color-accent-teal-hover: #F07546;
+  --color-accent-teal-deep: #D04815;
+  --color-accent-red: #E53935;
+  --color-accent-red-hover: #ff4d4d;
+  --color-warning-ember: #FF7043;
+}
+
+body {
+  background-color: #252422;
+  color: #CCC5B9;
+  font-family: var(--font-sans);
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Custom Scrollbar for Lightroom Aesthetic */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #252422;
+}
+::-webkit-scrollbar-thumb {
+  background: #403D39;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #4D4945;
+}
+
+/* Base resets */
+#root {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+}

@@ -1,0 +1,14 @@
+{
+    "destinations": {
+        "Screenshots": "D:\\Phone Archive\\Screenshots",
+        "Camera Photos": "D:\\Phone Archive\\Photos",
+        "WhatsApp Images": "D:\\Phone Archive\\WhatsApp Images",
+        "WhatsApp Videos": "D:\\Phone Archive\\WhatsApp Videos",
+        "Downloads": "D:\\Phone Archive\\Downloads",
+        "Videos": "D:\\Phone Archive\\Videos",
+        "DCIM": "D:\\Phone Archive\\DCIM",
+        "Pictures": "D:\\Phone Archive\\Pictures"
+    },
+    "retention_days": 7,
+    "recovery_bin_dir": "D:\\Phone Archive\\Recovery Bin"
+}

@@ -363,11 +363,28 @@ class MTPManager:
                 final_cat = "Videos"
                 
             # Retrieve file properties from Shell details (fast and reliable)
+            size = 0
             try:
-                size_str = folder.GetDetailsOf(item, 2) # Size column
-                size = parse_size_to_bytes(size_str)
+                size = item.ExtendedProperty("System.Size")
+                if size is None:
+                    size = item.ExtendedProperty("Size")
             except Exception:
-                size = 0
+                pass
+
+            if not size:
+                try:
+                    val = item.Size
+                    if val and val > 0:
+                        size = val
+                except Exception:
+                    pass
+
+            if not size:
+                try:
+                    size_str = folder.GetDetailsOf(item, 2)
+                    size = parse_size_to_bytes(size_str)
+                except Exception:
+                    size = 0
                 
             try:
                 mdate_raw = folder.GetDetailsOf(item, 3) # Modified column

@@ -262,8 +262,21 @@ def scan_folder_recursive(folder, category, files_list, subfolder_path="", paren
 
         size = 0
         try:
-            size = item.Size
+            size = item.ExtendedProperty("System.Size")
+            if size is None:
+                size = item.ExtendedProperty("Size")
         except Exception:
+            pass
+
+        if not size:
+            try:
+                val = item.Size
+                if val and val > 0:
+                    size = val
+            except Exception:
+                pass
+
+        if not size:
             try:
                 size_str = folder.GetDetailsOf(item, 2)
                 size = parse_size_to_bytes(size_str)

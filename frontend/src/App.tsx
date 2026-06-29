@@ -35,6 +35,11 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [previewFile, setPreviewFile] = useState<MediaFile | null>(null);
   
+  // Loading screen states
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingStatus, setLoadingStatus] = useState("Initializing cleanup manager...");
+  
   // Track last clicked index for Shift+Click range select
   const lastClickedIdRef = useRef<string | null>(null);
 
@@ -58,25 +63,74 @@ export default function App() {
       if (devices.length > 0) {
         const active = devices[0];
         setDevice(active);
+        
+        // Trigger initial files scan
         const filesData = await api.scanDevice(active.id, active.name);
         setAllFiles(filesData);
-        setSelectedIds(new Set());
-        lastClickedIdRef.current = null;
+        
+        // Auto select first file preview
+        if (filesData.length > 0) {
+          // Do not override if already selected
+        }
       }
-      await fetchStatus();
-    } catch (e) {
-      console.error("Scan error:", e);
-    } finally {
       setLoading(false);
+    } catch (e) {
+      console.error("Error scanning devices:", e);
+      setLoading(false);
+      throw e;
     }
   };
 
   useEffect(() => {
-    scanForDevices();
+    let progressTimer: number;
+    let progressVal = 0;
+    
+    const runProgress = () => {
+      progressTimer = window.setInterval(() => {
+        if (progressVal < 90) {
+          progressVal += Math.random() * 8 + 2;
+          setLoadingProgress(Math.min(90, Math.floor(progressVal)));
+          
+          if (progressVal > 70) {
+            setLoadingStatus("Scanning directories & folders...");
+          } else if (progressVal > 45) {
+            setLoadingStatus("Detecting connected USB devices...");
+          } else if (progressVal > 20) {
+            setLoadingStatus("Connecting to MTP helper server...");
+          }
+        }
+      }, 150);
+    };
+    
+    runProgress();
+
+    const initScan = async () => {
+      try {
+        await scanForDevices();
+        clearInterval(progressTimer);
+        setLoadingProgress(100);
+        setLoadingStatus("Initialization complete!");
+        setTimeout(() => {
+          setInitialLoading(false);
+        }, 600);
+      } catch (e) {
+        clearInterval(progressTimer);
+        setLoadingProgress(100);
+        setLoadingStatus("Checking system connection...");
+        setTimeout(() => {
+          setInitialLoading(false);
+        }, 1000);
+      }
+    };
+    
+    initScan();
     
     // Poll status periodically (every 10s)
     const interval = setInterval(fetchStatus, 10000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(progressTimer);
+      clearInterval(interval);
+    };
   }, []);
 
   // Compute category statistics dynamically
@@ -346,7 +400,47 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-grid-bg text-text-primary">
+    <div className="flex h-screen w-screen overflow-hidden bg-grid-bg text-text-primary relative">
+      
+      {/* Starting Loading Overlay */}
+      {initialLoading && (
+        <div className="fixed inset-0 z-50 bg-[#060708] flex flex-col items-center justify-center select-none transition-all duration-500">
+          <div className="flex flex-col items-center max-w-sm w-full text-center p-6">
+            {/* SVG Logo */}
+            <svg viewBox="0 0 100 100" className="w-20 h-20 animate-pulse text-accent-teal mb-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M50 15 L80 30 L50 45 L20 30 Z" className="opacity-90 stroke-accent-teal" />
+              <path d="M20 30 L20 70 L50 85 L80 70 L80 30" className="stroke-accent-teal" />
+              <path d="M50 45 L50 85" className="stroke-accent-teal/55" />
+              <path d="M35 52 L50 60 L65 52" className="stroke-accent-teal/40" />
+              <path d="M35 62 L50 70 L65 62" className="stroke-accent-teal/40" />
+            </svg>
+            
+            {/* App Name */}
+            <h1 className="text-xl font-bold tracking-[0.3em] uppercase text-text-primary mt-2">
+              DUMPSTER
+            </h1>
+            <p className="text-[9px] text-text-muted font-mono tracking-widest mt-1 uppercase">
+              Android Storage Cleanup Manager
+            </p>
+            
+            {/* Progress Bar Container */}
+            <div className="w-56 h-[3px] bg-card-bg rounded-full overflow-hidden border border-border-subtle/30 mt-8">
+              <div 
+                className="h-full bg-accent-teal rounded-full transition-all duration-300 ease-out" 
+                style={{ width: `${loadingProgress}%` }}
+              />
+            </div>
+            
+            {/* Progress Status */}
+            <span className="text-[8px] text-text-muted uppercase font-mono tracking-[0.2em] mt-3 block min-h-[12px]">
+              {loadingStatus}
+            </span>
+            <span className="text-[10px] text-accent-teal font-mono font-bold mt-1 block">
+              {loadingProgress}%
+            </span>
+          </div>
+        </div>
+      )}
       
       {/* 1. Left Sidebar */}
       <Sidebar

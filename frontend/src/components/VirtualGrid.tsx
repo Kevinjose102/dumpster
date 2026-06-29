@@ -66,6 +66,7 @@ function loadThumbnail(fileId: string, url: string): Promise<string | null> {
 interface LazyThumbnailProps {
   file: MediaFile;
   isSelected: boolean;
+  isFocused: boolean;
   onToggleSelect: (id: string, isShift: boolean) => void;
   onDoubleClick: (file: MediaFile) => void;
   width: number;
@@ -77,6 +78,7 @@ interface LazyThumbnailProps {
 const LazyThumbnail: React.FC<LazyThumbnailProps> = ({
   file,
   isSelected,
+  isFocused,
   onToggleSelect,
   onDoubleClick,
   width,
@@ -161,7 +163,9 @@ const LazyThumbnail: React.FC<LazyThumbnailProps> = ({
       onDoubleClick={() => onDoubleClick(file)}
       className={`absolute rounded transition-all duration-150 cursor-pointer flex flex-col bg-card-bg group select-none ${
         isSelected
-          ? "ring-2 ring-accent-teal border-transparent shadow-[0_0_12px_rgba(0,184,169,0.3)]"
+          ? "ring-2 ring-accent-teal border-transparent shadow-[0_0_12px_rgba(235,94,40,0.3)]"
+          : isFocused
+          ? "ring-2 ring-accent-teal/50 border-transparent shadow-[0_0_8px_rgba(235,94,40,0.15)] bg-card-hover"
           : "border border-border-subtle hover:bg-card-hover hover:border-text-secondary"
       }`}
       style={{ width, height, left, top }}
@@ -247,6 +251,12 @@ export const VirtualGrid: React.FC<VirtualGridProps> = ({
   const [scrollTop, setScrollTop] = useState(0);
   const [containerWidth, setContainerWidth] = useState(800);
   const [containerHeight, setContainerHeight] = useState(600);
+  const [focusedIndex, setFocusedIndex] = useState<number>(-1);
+
+  // Reset keyboard focus whenever files list changes
+  useEffect(() => {
+    setFocusedIndex(-1);
+  }, [files]);
 
   const gap = 16;
   const padding = 32;
@@ -256,6 +266,66 @@ export const VirtualGrid: React.FC<VirtualGridProps> = ({
   const totalGapsWidth = (columns - 1) * gap;
   const itemWidth = Math.floor((containerWidth - padding - totalGapsWidth) / columns);
   const itemHeight = itemWidth + 20;
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (files.length === 0) return;
+
+    let nextIndex = focusedIndex;
+
+    // Handle initial focus key presses
+    if (nextIndex === -1 && ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", " ", "Enter"].includes(e.key)) {
+      setFocusedIndex(0);
+      e.preventDefault();
+      return;
+    }
+
+    if (e.key === "ArrowLeft") {
+      nextIndex = Math.max(0, nextIndex - 1);
+      e.preventDefault();
+    } else if (e.key === "ArrowRight") {
+      nextIndex = Math.min(files.length - 1, nextIndex + 1);
+      e.preventDefault();
+    } else if (e.key === "ArrowUp") {
+      nextIndex = Math.max(0, nextIndex - columns);
+      e.preventDefault();
+    } else if (e.key === "ArrowDown") {
+      nextIndex = Math.min(files.length - 1, nextIndex + columns);
+      e.preventDefault();
+    } else if (e.key === " ") {
+      // Toggle selection with Space
+      if (nextIndex >= 0 && nextIndex < files.length) {
+        onToggleSelect(files[nextIndex].id, e.shiftKey);
+      }
+      e.preventDefault();
+    } else if (e.key === "Enter") {
+      // Open lightbox with Enter
+      if (nextIndex >= 0 && nextIndex < files.length) {
+        onDoubleClick(files[nextIndex]);
+      }
+      e.preventDefault();
+    }
+
+    if (nextIndex !== focusedIndex) {
+      setFocusedIndex(nextIndex);
+
+      // Auto-scroll row into view
+      const container = containerRef.current;
+      if (container) {
+        const row = Math.floor(nextIndex / columns);
+        const rowHeightVal = itemHeight + gap;
+        const rowTop = row * rowHeightVal;
+
+        const scrollTopVal = container.scrollTop;
+        const viewHeight = container.clientHeight;
+
+        if (rowTop < scrollTopVal + 16) {
+          container.scrollTop = Math.max(0, rowTop - 16);
+        } else if (rowTop + itemHeight > scrollTopVal + viewHeight - 16) {
+          container.scrollTop = rowTop + itemHeight - viewHeight + 16;
+        }
+      }
+    }
+  };
 
   // Drag select states
   const [dragRect, setDragRect] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
@@ -444,7 +514,9 @@ export const VirtualGrid: React.FC<VirtualGridProps> = ({
   return (
     <div
       ref={containerRef}
-      className="flex-1 overflow-y-auto bg-grid-bg p-4 relative select-none"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+      className="flex-1 overflow-y-auto bg-grid-bg p-4 relative select-none outline-none focus:outline-none"
       onScroll={handleScroll}
       onMouseDown={handleMouseDown}
     >
@@ -463,6 +535,7 @@ export const VirtualGrid: React.FC<VirtualGridProps> = ({
                 key={item.id}
                 file={item}
                 isSelected={selectedIds.has(item.id)}
+                isFocused={focusedIndex === index}
                 onToggleSelect={onToggleSelect}
                 onDoubleClick={onDoubleClick}
                 width={itemWidth}

@@ -13,6 +13,8 @@ import {
   DeviceMobile,
   Trash,
   X,
+  CaretLeft,
+  CaretRight,
 } from "@phosphor-icons/react";
 
 
@@ -34,6 +36,50 @@ export default function App() {
   const [status, setStatus] = useState<AppStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [previewFile, setPreviewFile] = useState<MediaFile | null>(null);
+
+  // Lightbox Zoom & Pan states
+  const [lightboxScale, setLightboxScale] = useState(1);
+  const [lightboxOffset, setLightboxOffset] = useState({ x: 0, y: 0 });
+  const [lightboxDragging, setLightboxDragging] = useState(false);
+  const lightboxDragStartRef = useRef({ x: 0, y: 0 });
+
+  // Reset zoom & pan when preview file changes
+  useEffect(() => {
+    setLightboxScale(1);
+    setLightboxOffset({ x: 0, y: 0 });
+    setLightboxDragging(false);
+  }, [previewFile]);
+
+  const handleLightboxWheel = (e: React.WheelEvent<HTMLImageElement>) => {
+    const zoomIntensity = 0.15;
+    const delta = e.deltaY < 0 ? 1 : -1;
+    const newScale = Math.max(1, Math.min(6, lightboxScale + delta * zoomIntensity));
+    
+    if (newScale === 1) {
+      setLightboxOffset({ x: 0, y: 0 });
+    }
+    setLightboxScale(newScale);
+  };
+
+  const handleLightboxMouseDown = (e: React.MouseEvent<HTMLImageElement>) => {
+    if (lightboxScale <= 1) return;
+    setLightboxDragging(true);
+    lightboxDragStartRef.current = { x: e.clientX - lightboxOffset.x, y: e.clientY - lightboxOffset.y };
+    e.preventDefault();
+  };
+
+  const handleLightboxMouseMove = (e: React.MouseEvent<HTMLImageElement>) => {
+    if (!lightboxDragging) return;
+    setLightboxOffset({
+      x: e.clientX - lightboxDragStartRef.current.x,
+      y: e.clientY - lightboxDragStartRef.current.y
+    });
+    e.preventDefault();
+  };
+
+  const handleLightboxMouseUp = () => {
+    setLightboxDragging(false);
+  };
   
   // Loading screen states
   const [initialLoading, setInitialLoading] = useState(true);
@@ -211,6 +257,32 @@ export default function App() {
 
     return files;
   }, [categoryFiles, activeDateFilter, sortBy]);
+
+  // Listen for left/right arrow keys inside lightbox
+  useEffect(() => {
+    if (!previewFile) return;
+
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      const index = filteredFiles.findIndex((f) => f.id === previewFile.id);
+      if (index === -1) return;
+
+      if (e.key === "ArrowRight") {
+        const nextIndex = (index + 1) % filteredFiles.length;
+        setPreviewFile(filteredFiles[nextIndex]);
+        e.preventDefault();
+      } else if (e.key === "ArrowLeft") {
+        const prevIndex = (index - 1 + filteredFiles.length) % filteredFiles.length;
+        setPreviewFile(filteredFiles[prevIndex]);
+        e.preventDefault();
+      } else if (e.key === "Escape") {
+        setPreviewFile(null);
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [previewFile, filteredFiles]);
 
   // Handle shift-click range select or normal toggle select
   const handleToggleSelect = (id: string, isShift: boolean) => {
@@ -618,39 +690,82 @@ export default function App() {
         >
           <button
             onClick={() => setPreviewFile(null)}
-            className="absolute top-6 right-6 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-default"
+            className="absolute top-6 right-6 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-default z-10"
             title="Close Preview (Esc)"
           >
             <X size={20} />
           </button>
           
+          {/* Navigation Chevron Buttons */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              const idx = filteredFiles.findIndex((f) => f.id === previewFile.id);
+              if (idx !== -1) {
+                const prevIdx = (idx - 1 + filteredFiles.length) % filteredFiles.length;
+                setPreviewFile(filteredFiles[prevIdx]);
+              }
+            }}
+            className="absolute left-6 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer z-10"
+            title="Previous (ArrowLeft)"
+          >
+            <CaretLeft size={24} weight="bold" />
+          </button>
+          
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              const idx = filteredFiles.findIndex((f) => f.id === previewFile.id);
+              if (idx !== -1) {
+                const nextIdx = (idx + 1) % filteredFiles.length;
+                setPreviewFile(filteredFiles[nextIdx]);
+              }
+            }}
+            className="absolute right-6 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer z-10"
+            title="Next (ArrowRight)"
+          >
+            <CaretRight size={24} weight="bold" />
+          </button>
+          
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="max-w-[90%] max-h-[85%] flex flex-col items-center gap-4 cursor-default"
+            className="max-w-[90%] max-h-[85%] flex flex-col items-center gap-4 cursor-default z-0"
           >
-            {previewFile.file_type === "video" ? (
-              <video
-                src={api.getFileUrl(previewFile.id, previewFile.original_path)}
-                controls
-                autoPlay
-                className="max-w-full max-h-[70vh] rounded shadow-2xl"
-              />
-            ) : (
-              <img
-                src={api.getFileUrl(previewFile.id, previewFile.original_path)}
-                alt={previewFile.name}
-                className="max-w-full max-h-[70vh] rounded shadow-2xl object-contain"
-              />
-            )}
+            <div className="overflow-hidden flex items-center justify-center max-w-full max-h-[70vh] rounded shadow-2xl relative bg-black/40">
+              {previewFile.file_type === "video" ? (
+                <video
+                  src={api.getFileUrl(previewFile.id, previewFile.original_path)}
+                  controls
+                  autoPlay
+                  className="max-w-full max-h-[70vh] rounded"
+                />
+              ) : (
+                <img
+                  src={api.getFileUrl(previewFile.id, previewFile.original_path)}
+                  alt={previewFile.name}
+                  onWheel={handleLightboxWheel}
+                  onMouseDown={handleLightboxMouseDown}
+                  onMouseMove={handleLightboxMouseMove}
+                  onMouseUp={handleLightboxMouseUp}
+                  onMouseLeave={handleLightboxMouseUp}
+                  className="max-w-full max-h-[70vh] rounded object-contain select-none"
+                  style={{
+                    transform: `scale(${lightboxScale}) translate(${lightboxOffset.x / lightboxScale}px, ${lightboxOffset.y / lightboxScale}px)`,
+                    cursor: lightboxScale > 1 ? (lightboxDragging ? "grabbing" : "grab") : "default",
+                    transition: lightboxDragging ? "none" : "transform 0.15s ease-out"
+                  }}
+                />
+              )}
+            </div>
             
-            <div className="text-center text-white">
+            <div className="text-center text-white z-10">
               <p className="text-sm font-semibold truncate max-w-md">{previewFile.name}</p>
               <p className="text-[10px] font-mono text-text-secondary mt-1 uppercase">
                 {previewFile.category} / {previewFile.subfolder || "Root"} • {formatStorage(previewFile.size)} • {new Date(previewFile.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "numeric" })}
               </p>
             </div>
 
-            <div className="flex gap-4 mt-2">
+            <div className="flex gap-4 mt-2 z-10">
               <button
                 onClick={async () => {
                   const fid = previewFile.id;
